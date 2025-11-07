@@ -1,0 +1,288 @@
+HTML CSS and js. 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyBank Online</title>
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    background: #f3f6fa;
+    margin: 0;
+    padding: 0;
+  }
+
+  header {
+    background: #0056d2;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+    font-size: 1.5em;
+  }
+
+  .container {
+    width: 90%;
+    max-width: 400px;
+    margin: 40px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+  }
+
+  h2 {
+    text-align: center;
+    color: #0056d2;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #0056d2;
+    border: none;
+    color: white;
+    font-size: 1em;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #0041a8;
+  }
+
+  .link {
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .link a {
+    color: #0056d2;
+    cursor: pointer;
+  }
+
+  #dashboard {
+    display: none;
+    max-width: 600px;
+  }
+
+  .balance {
+    background: #0056d2;
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(150px,1fr));
+    gap: 15px;
+  }
+
+  .card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  }
+
+  .logout {
+    background: #ff4747;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+  <header>MyBank Online</header>
+
+  <!-- SIGNUP FORM -->
+  <div class="container" id="signup">
+    <h2>Create Account</h2>
+    <input type="text" id="signupName" placeholder="Full Name" required>
+    <input type="email" id="signupEmail" placeholder="Email" required>
+    <input type="password" id="signupPassword" placeholder="Password" required>
+    <button onclick="signup()">Sign Up</button>
+    <div class="link">Already have an account? <a onclick="showLogin()">Login</a></div>
+  </div>
+
+  <!-- LOGIN FORM -->
+  <div class="container" id="login" style="display:none;">
+    <h2>Login</h2>
+    <input type="email" id="loginEmail" placeholder="Email" required>
+    <input type="password" id="loginPassword" placeholder="Password" required>
+    <button onclick="login()">Login</button>
+    <div class="link">Don't have an account? <a onclick="showSignup()">Sign up</a></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="container" id="dashboard">
+    <h2>Welcome, <span id="userName"></span> 👋</h2>
+    <div class="balance">
+      <h3>Account Balance</h3>
+      <h1>$<span id="balance">0.00</span></h1>
+    </div>
+
+    <div class="actions">
+      <div class="card">
+        <h3>Deposit</h3>
+        <input type="number" id="depositAmount" placeholder="Enter amount">
+        <button onclick="deposit()">Deposit</button>
+      </div>
+
+      <div class="card">
+        <h3>Withdraw</h3>
+        <input type="number" id="withdrawAmount" placeholder="Enter amount">
+        <button onclick="withdraw()">Withdraw</button>
+      </div>
+
+      <div class="card">
+        <h3>Transfer</h3>
+        <input type="text" id="transferTo" placeholder="Recipient Email">
+        <input type="number" id="transferAmount" placeholder="Enter amount">
+        <button onclick="transfer()">Send</button>
+      </div>
+    </div>
+
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+
+<script>
+  // STORE USERS IN LOCAL STORAGE
+  let currentUser = null;
+
+  function showSignup() {
+    document.getElementById("signup").style.display = "block";
+    document.getElementById("login").style.display = "none";
+  }
+
+  function showLogin() {
+    document.getElementById("login").style.display = "block";
+    document.getElementById("signup").style.display = "none";
+  }
+
+  function signup() {
+    const name = document.getElementById("signupName").value;
+    const email = document.getElementById("signupEmail").value;
+    const password = document.getElementById("signupPassword").value;
+
+    if (!name || !email || !password) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    if (users.find(u => u.email === email)) {
+      alert("User already exists!");
+      return;
+    }
+
+    users.push({ name, email, password, balance: 0 });
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Signup successful! Please login.");
+    showLogin();
+  }
+
+  function login() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    const user = users.find(u => u.email === email && u.password === password);
+
+    if (user) {
+      currentUser = user;
+      localStorage.setItem("currentUser", email);
+      showDashboard();
+    } else {
+      alert("Invalid credentials!");
+    }
+  }
+
+  function showDashboard() {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    const email = localStorage.getItem("currentUser");
+    const user = users.find(u => u.email === email);
+
+    if (!user) {
+      alert("Login required!");
+      showLogin();
+      return;
+    }
+
+    currentUser = user;
+    document.getElementById("signup").style.display = "none";
+    document.getElementById("login").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    document.getElementById("userName").textContent = user.name;
+    document.getElementById("balance").textContent = user.balance.toFixed(2);
+  }
+
+  function deposit() {
+    const amount = parseFloat(document.getElementById("depositAmount").value);
+    if (isNaN(amount) || amount <= 0) return alert("Enter valid amount");
+
+    updateBalance(currentUser.email, currentUser.balance + amount);
+    alert("Deposit successful!");
+  }
+
+  function withdraw() {
+    const amount = parseFloat(document.getElementById("withdrawAmount").value);
+    if (isNaN(amount) || amount <= 0) return alert("Enter valid amount");
+    if (amount > currentUser.balance) return alert("Insufficient funds!");
+
+    updateBalance(currentUser.email, currentUser.balance - amount);
+    alert("Withdrawal successful!");
+  }
+
+  function transfer() {
+    const toEmail = document.getElementById("transferTo").value;
+    const amount = parseFloat(document.getElementById("transferAmount").value);
+    if (!toEmail || isNaN(amount) || amount <= 0) return alert("Invalid input");
+    if (toEmail === currentUser.email) return alert("Cannot transfer to self");
+    if (amount > currentUser.balance) return alert("Insufficient funds!");
+
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    const recipient = users.find(u => u.email === toEmail);
+    if (!recipient) return alert("Recipient not found!");
+
+    updateBalance(currentUser.email, currentUser.balance - amount);
+    updateBalance(toEmail, recipient.balance + amount);
+    alert("Transfer successful!");
+  }
+
+  function updateBalance(email, newBalance) {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    const index = users.findIndex(u => u.email === email);
+    if (index !== -1) {
+      users[index].balance = newBalance;
+      localStorage.setItem("users", JSON.stringify(users));
+      currentUser = users[index];
+      document.getElementById("balance").textContent = currentUser.balance.toFixed(2);
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("currentUser");
+    currentUser = null;
+    showLogin();
+    document.getElementById("dashboard").style.display = "none";
+  }
+
+  // AUTO-LOGIN IF USER IS ALREADY LOGGED IN
+  window.onload = function() {
+    const email = localStorage.getItem("currentUser");
+    if (email) showDashboard();
+  };
+</script>
+</body>
+</html> 
